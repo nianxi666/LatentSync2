@@ -1,4 +1,6 @@
-import gradio as gr
+import os
+os.environ["MPLBACKEND"] = "agg"  # 使用非交互式后端
+import matplotlib.pyplot as plt
 from pathlib import Path
 from scripts.inference import main
 from omegaconf import OmegaConf
@@ -9,13 +11,7 @@ CONFIG_PATH = Path("configs/unet/stage2.yaml")
 CHECKPOINT_PATH = Path("checkpoints/latentsync_unet.pt")
 
 
-def process_video(
-    video_path,
-    audio_path,
-    guidance_scale,
-    inference_steps,
-    seed,
-):
+def process_video(video_path, audio_path, guidance_scale, inference_steps, seed):
     # Create the temp directory if it doesn't exist
     output_dir = Path("./temp")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -27,7 +23,7 @@ def process_video(
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Set the output path for the processed video
-    output_path = str(output_dir / f"{video_file_path.stem}_{current_time}.mp4")  # Change the filename as needed
+    output_path = str(output_dir / f"{video_file_path.stem}_{current_time}.mp4")
 
     config = OmegaConf.load(CONFIG_PATH)
 
@@ -50,12 +46,9 @@ def process_video(
         return output_path  # Ensure the output path is returned
     except Exception as e:
         print(f"Error during processing: {str(e)}")
-        raise gr.Error(f"Error during processing: {str(e)}")
 
 
-def create_args(
-    video_path: str, audio_path: str, output_path: str, inference_steps: int, guidance_scale: float, seed: int
-) -> argparse.Namespace:
+def create_args(video_path: str, audio_path: str, output_path: str, inference_steps: int, guidance_scale: float, seed: int) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--inference_ckpt_path", type=str, required=True)
     parser.add_argument("--video_path", type=str, required=True)
@@ -85,66 +78,15 @@ def create_args(
     )
 
 
-# Create Gradio interface
-with gr.Blocks(title="LatentSync demo") as demo:
-    gr.Markdown(
-    """
-    <h1 align="center">LatentSync</h1>
-
-    <div style="display:flex;justify-content:center;column-gap:4px;">
-        <a href="https://github.com/bytedance/LatentSync">
-            <img src='https://img.shields.io/badge/GitHub-Repo-blue'>
-        </a> 
-        <a href="https://arxiv.org/abs/2412.09262">
-            <img src='https://img.shields.io/badge/arXiv-Paper-red'>
-        </a>
-    </div>
-    """
-    )
-
-    with gr.Row():
-        with gr.Column():
-            video_input = gr.Video(label="Input Video")
-            audio_input = gr.Audio(label="Input Audio", type="filepath")
-
-            with gr.Row():
-                guidance_scale = gr.Slider(
-                    minimum=1.0,
-                    maximum=3.0,
-                    value=2.0,
-                    step=0.5,
-                    label="Guidance Scale",
-                )
-                inference_steps = gr.Slider(minimum=10, maximum=50, value=20, step=1, label="Inference Steps")
-
-            with gr.Row():
-                seed = gr.Number(value=1247, label="Random Seed", precision=0)
-
-            process_btn = gr.Button("Process Video")
-
-        with gr.Column():
-            video_output = gr.Video(label="Output Video")
-
-            gr.Examples(
-                examples=[
-                    ["assets/demo1_video.mp4", "assets/demo1_audio.wav"],
-                    ["assets/demo2_video.mp4", "assets/demo2_audio.wav"],
-                    ["assets/demo3_video.mp4", "assets/demo3_audio.wav"],
-                ],
-                inputs=[video_input, audio_input],
-            )
-
-    process_btn.click(
-        fn=process_video,
-        inputs=[
-            video_input,
-            audio_input,
-            guidance_scale,
-            inference_steps,
-            seed,
-        ],
-        outputs=video_output,
-    )
-
 if __name__ == "__main__":
-    demo.launch(inbrowser=True, share=True)
+    parser = argparse.ArgumentParser(description="Process video with audio.")
+    parser.add_argument("--input_video", type=str, required=True, help="Input video file path.")
+    parser.add_argument("--input_audio", type=str, required=True, help="Input audio file path.")
+    parser.add_argument("--guidance_scale", type=float, default=2.0, help="Guidance scale.")
+    parser.add_argument("--inference_steps", type=int, default=20, help="Number of inference steps.")
+    parser.add_argument("--seed", type=int, default=1247, help="Random seed.")
+
+    args = parser.parse_args()
+
+    output_path = process_video(args.input_video, args.input_audio, args.guidance_scale, args.inference_steps, args.seed)
+    print(f"Output video saved to: {output_path}")
