@@ -1,25 +1,25 @@
 # input_schema.py
-from pydantic import BaseModel, Field  # <--- 确保这一行是正确的！
+from pydantic import BaseModel, Field  # <--- 再次确认此导入！
 from typing import Optional
 
 class Item(BaseModel):
     """
-    Defines the expected input schema for the LatentSync model.
+    Defines the expected input schema for the LatentSync model's 'infer' method.
     """
     prompt: str = Field(
-        ..., 
-        example="A futuristic city with flying cars, concept art",
+        ..., # '...' 表示这是必填字段
+        example="A personalized portrait using LatentSync",
         description="Text prompt to guide the image generation."
     )
     num_inference_steps: Optional[int] = Field(
-        default=50,
+        default=50, # 与 app.py 中 get 的默认值一致
         example=50,
         description="Number of denoising steps.",
         gt=0,
         le=150
     )
     guidance_scale: Optional[float] = Field(
-        default=7.5,
+        default=7.5, # 与 app.py 中 get 的默认值一致
         example=7.5,
         description="Classifier-free guidance scale.",
         gt=0,
@@ -30,14 +30,14 @@ class Item(BaseModel):
     #     example=42,
     #     description="Seed for reproducibility. If None, a random seed will be used."
     # )
-    # ... (根据您的模型实际需要的其他字段) ...
-
-    # 示例配置，说明如何使用 Config 类（可选）
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "prompt": "A beautiful personalized image of a cat wearing a hat",
-    #             "num_inference_steps": 50,
-    #             "guidance_scale": 7.0
-    #         }
-    #     }
+    # height: Optional[int] = Field(
+    #     default=512,
+    #     example=512,
+    #     description="Height of the generated image."
+    # )
+    # width: Optional[int] = Field(
+    #     default=512,
+    #     example=512,
+    #     description="Width of the generated image."
+    # )
+    # 根据您的 LatentSync 模型实际需要的输入参数添加更多字段
