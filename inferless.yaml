@@ -1,31 +1,18 @@
 # inferless.yaml
-model_name: LatentSync-Deployment # 给你的部署模型起个名字
+model_name: LatentSync-Deployment
 language: python
-python_version: "3.10" # 应与 inferless-runtime-config.yaml 中的一致
-runtime_id: "latentsync-custom-runtime" # 引用上面定义的运行时名称
-handler_path: "app.py" # Inferless 的入口 Python 文件 (我们接下来会创建它)
-class_name: "Handler"    # 入口文件中的类名
+python_version: "3.10"
+runtime_id: "latentsync-custom-runtime" # 之前定义的自定义运行时
+handler_path: "app.py" # 包含 InferlessPythonModel 的文件
+class_name: "InferlessPythonModel"    # <--- 确保这个名称与 app.py 中的类名一致
 
-# 资源配置 (非常重要，根据 LatentSync 的需求调整)
+# input_json: { ... } # 如果你不使用 input_schema.py，可以在这里定义
+
 resources:
-  # gpu_type: "T4"  # 例如 NVIDIA T4。其他选项如 A10G, A100 等，取决于模型大小和性能需求
-  # gpu_count: 1      # GPU 数量
-  # min_replicas: 0   # 最小实例数 (0 表示可以缩容到零以节省成本)
-  # max_replicas: 2   # 最大实例数
-  # inference_timeout_s: 300 # 推理超时时间 (秒)
-  # cpu_request: "1"
-  # memory_request: "4Gi" # 根据模型大小调整
+  gpu_type: "T4"  # 或 A10G, A100 等，根据 LatentSync 需求
+  gpu_count: 1
+  min_replicas: 0
+  max_replicas: 2
+  inference_timeout_s: 300 # 对于图像生成可能需要更长
 
-# 如果模型权重需要从外部下载或很大，考虑使用 Inferless Volumes
-# volumes:
-#   - name: model-cache # 卷的名称
-#     mount_path: /models # 挂载到容器内的路径
-#     volume_id: "your-volume-id-from-inferless-ui" # 在 Inferless UI 创建卷后获取
-
-# 环境变量 (如果你的 app.py 需要)
-# environment_variables:
-#   MODEL_PATH: "/models/your_model_weights" # 示例，如果使用卷
-
-# Secrets (如果需要 API 密钥等)
-# secrets:
-#   HUGGING_FACE_TOKEN: "your-hf-token-secret-name"
+# ... (其他配置如 volumes, environment_variables, secrets 保持不变)
