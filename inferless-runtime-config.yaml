@@ -1,0 +1,52 @@
+# inferless-runtime-config.yaml
+runtime_name: latentsync-custom-runtime # 给你的运行时起一个名字
+python_version: "3.10" # 必须与项目要求一致
+
+dependencies:
+  pip:
+    # 基于 LatentSync 的 requirements.txt 和 environment.yaml
+    # 确保 PyTorch 版本与 CUDA 兼容。Inferless 的 GPU 实例通常带有预装的 CUDA。
+    # 你可能需要指定 PyTorch 的 CUDA 版本。
+    # 例如：torch==2.1.0+cu118 torchvision==0.16.0+cu118 torchaudio==2.1.0+cu118
+    # --extra-index-url https://download.pytorch.org/whl/cu118
+    # (下面会通过 shell_commands 更精确地安装 PyTorch)
+
+    # 从 requirements.txt 提取的核心包
+    - diffusers
+    - transformers
+    - accelerate
+    # bitsandbytes 和 xformers 可能需要特定编译，如果安装复杂，可以先尝试不装，或在 shell_commands 处理
+    - bitsandbytes
+    - safetensors
+    - xformers
+    - omegaconf
+    - peft
+    - opencv-python
+    - imageio
+    - matplotlib # 推理服务通常不需要 matplotlib，除非你要生成并返回图表本身
+    - tqdm
+    - ftfy
+    - tensorboard # 通常用于训练，推理服务不需要
+    - gradio # 如果你只是想暴露 API 而不是 Gradio UI，这个也可以不需要
+    - easydict
+
+  apt: # 系统级依赖
+    - git # 一些 pip 包可能需要
+    - ffmpeg # 如果涉及视频或某些媒体处理
+
+shell_commands: # 按顺序执行的 shell 命令，用于更复杂的安装
+  # 安装与 CUDA 11.8 兼容的 PyTorch (根据 LatentSync 的 environment.yaml)
+  # Inferless 的基础镜像需要支持 CUDA 11.8
+  - echo "Installing PyTorch for CUDA 11.8..."
+  - pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 torchaudio==2.0.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+  # 安装 requirements.txt 中的其他依赖 (如果上面 pip 部分没有完全覆盖或为了特定顺序)
+  # 你可以创建一个仅包含其他非 PyTorch 依赖的 new_requirements.txt
+  # 或者在这里逐个安装，特别是 xformers 和 bitsandbytes
+  - echo "Installing other dependencies..."
+  - pip install diffusers transformers accelerate safetensors omegaconf peft opencv-python imageio tqdm ftfy easydict
+  # 尝试安装 xformers 和 bitsandbytes。这些包有时安装比较棘手。
+  # 如果遇到问题，可能需要查阅它们的文档以获取针对特定环境的安装指令。
+  - echo "Attempting to install xformers and bitsandbytes..."
+  - pip install xformers # 如果失败，可能需要特定版本或编译选项
+  - pip install bitsandbytes # 同上
+  - echo "Custom runtime setup complete."
