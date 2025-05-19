@@ -1,5 +1,3 @@
-import os
-os.environ["MPLBACKEND"] = "agg"  # 使用非交互式后端
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scripts.inference import main
